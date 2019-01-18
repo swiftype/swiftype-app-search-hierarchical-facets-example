@@ -1,0 +1,68 @@
+[
+  {
+    "id": "hoodie-1",
+    "name": "Hoodie 1",
+    "category1": "Shirts",
+    "category2": "Sweatshirts",
+    "category3": "Hoodies"
+  },
+  {
+    "id": "hoodie-2",
+    "name": "Hoodie 2",
+    "category1": "Shirts",
+    "category2": "Sweatshirts",
+    "category3": "Hoodies"
+  },
+  {
+    "id": "polo-1",
+    "name": "Polo 1",
+    "category1": "Shirts",
+    "category2": "Collared Shirts",
+    "category3": "Polo shirts"
+  },
+  {
+    "id": "polo-2",
+    "name": "Polo 2",
+    "category1": "Shirts",
+    "category2": "Collared Shirts",
+    "category3": "Polo shirts"
+  },
+  {
+    "id": "polo-3",
+    "name": "Polo 3",
+    "category1": "Shirts",
+    "category2": "Collared Shirts",
+    "category3": "Polo shirts"
+  },
+  {
+    "id": "dress-1",
+    "name": "Dress Shirt 1",
+    "category1": "Shirts",
+    "category2": "Collared Shirts",
+    "category3": "Dress shirts"
+  },
+  {
+    "id": "sandals-1",
+    "name": "Sandals 1",
+    "category1": "Footwear",
+    "category2": "Sandals"
+  },
+  {
+    "id": "sneakers-1",
+    "name": "Sneakers 1",
+    "category1": "Footwear",
+    "category2": "Sneakers"
+  },
+  {
+    "id": "sneakers-2",
+    "name": "Sneakers 2",
+    "category1": "Footwear",
+    "category2": "Sneakers"
+  },
+  {
+    "id": "sneakers-3",
+    "name": "Sneakers 3",
+    "category1": "Footwear",
+    "category2": "Sneakers"
+  }
+]

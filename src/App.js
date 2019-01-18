@@ -1,10 +1,5 @@
 import React, { Component } from "react";
-import {
-  Layout,
-  Result,
-  SearchBox,
-  PagingInfo
-} from "@elastic/react-search-ui-views";
+import { Layout, Result, SearchBox } from "@elastic/react-search-ui-views";
 import "@elastic/react-search-ui-views/lib/styles/styles.css";
 import * as SwiftypeAppSearch from "swiftype-app-search-javascript";
 
@@ -47,22 +42,99 @@ class App extends Component {
     return arr;
   }
 
-  search = () => {
-    return client.search(this.state.searchTerm, {
-      filters: {
-        all: this.getFilters()
-      },
+  search = async () => {
+    let promises = [];
+
+    promises = [
+      ...promises,
+      client.search(this.state.searchTerm, {
+        filters: {
+          all: this.getFilters()
+        },
+        facets: {
+          category1: [
+            {
+              type: "value"
+            }
+          ],
+          category2: [
+            {
+              type: "value"
+            }
+          ],
+          category3: [
+            {
+              type: "value"
+            }
+          ]
+        }
+      })
+    ];
+
+    promises = [...promises, this.getCategory1Facets()];
+
+    if (this.state.category1) {
+      promises = [...promises, this.getCategory2Facets()];
+    }
+
+    if (this.state.category2) {
+      promises = [...promises, this.getCategory3Facets()];
+    }
+
+    const [
+      results,
+      category1Facets,
+      category2Facets,
+      category3Facets
+    ] = await Promise.all(promises);
+
+    let facets = {};
+    facets = { ...facets, ...category1Facets };
+    facets = { ...facets, ...category2Facets };
+    facets = { ...facets, ...category3Facets };
+
+    results.info.facets = facets;
+    return results;
+  };
+
+  getCategory1Facets = async () => {
+    const results = await client.search(this.state.searchTerm, {
       facets: {
         category1: [
           {
             type: "value"
           }
-        ],
+        ]
+      }
+    });
+    return results.info.facets;
+  };
+
+  getCategory2Facets = async () => {
+    const results = await client.search(this.state.searchTerm, {
+      filters: {
+        all: [{ category1: this.state.category1 }]
+      },
+      facets: {
         category2: [
           {
             type: "value"
           }
-        ],
+        ]
+      }
+    });
+    return results.info.facets;
+  };
+
+  getCategory3Facets = async () => {
+    const results = await client.search(this.state.searchTerm, {
+      filters: {
+        all: [
+          { category1: this.state.category1 },
+          { category2: this.state.category2 }
+        ]
+      },
+      facets: {
         category3: [
           {
             type: "value"
@@ -70,10 +142,12 @@ class App extends Component {
         ]
       }
     });
+    return results.info.facets;
   };
 
   onSubmit = e => {
     e.preventDefault();
+
     this.search().then(results => {
       this.setState({
         results
@@ -215,7 +289,7 @@ class App extends Component {
                 <div>
                   {this.state.results.info.facets["category1"][0].data.map(
                     thing => (
-                      <div>
+                      <div key={thing.value}>
                         <span
                           className={"selectable"}
                           onClick={e => {
@@ -225,48 +299,50 @@ class App extends Component {
                         >
                           {thing.value} ({thing.count})
                         </span>
-                        {this.state.category1Selected && (
-                          <div>
-                            {this.state.results.info.facets[
-                              "category2"
-                            ][0].data.map(thing => (
-                              <div>
-                                &nbsp;&nbsp;
-                                <span
-                                  className={"selectable"}
-                                  onClick={e => {
-                                    e.preventDefault();
-                                    this.handleClickCategory2(thing.value);
-                                  }}
-                                >
-                                  {thing.value} ({thing.count})
-                                </span>
-                                {this.state.category2Selected && (
-                                  <div>
-                                    {this.state.results.info.facets[
-                                      "category3"
-                                    ][0].data.map(thing => (
+                        {this.state.category1Selected &&
+                          this.state.category1 === thing.value && (
+                            <div>
+                              {this.state.results.info.facets[
+                                "category2"
+                              ][0].data.map(thing => (
+                                <div key={thing.value}>
+                                  &nbsp;&nbsp;
+                                  <span
+                                    className={"selectable"}
+                                    onClick={e => {
+                                      e.preventDefault();
+                                      this.handleClickCategory2(thing.value);
+                                    }}
+                                  >
+                                    {thing.value} ({thing.count})
+                                  </span>
+                                  {this.state.category2Selected &&
+                                    this.state.category2 === thing.value && (
                                       <div>
-                                        &nbsp;&nbsp;&nbsp;&nbsp;
-                                        <span
-                                          className={"selectable"}
-                                          onClick={e => {
-                                            e.preventDefault();
-                                            this.handleClickCategory3(
-                                              thing.value
-                                            );
-                                          }}
-                                        >
-                                          {thing.value} ({thing.count})
-                                        </span>
+                                        {this.state.results.info.facets[
+                                          "category3"
+                                        ][0].data.map(thing => (
+                                          <div key={thing.value}>
+                                            &nbsp;&nbsp;&nbsp;&nbsp;
+                                            <span
+                                              className={"selectable"}
+                                              onClick={e => {
+                                                e.preventDefault();
+                                                this.handleClickCategory3(
+                                                  thing.value
+                                                );
+                                              }}
+                                            >
+                                              {thing.value} ({thing.count})
+                                            </span>
+                                          </div>
+                                        ))}
                                       </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                                    )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     )
                   )}

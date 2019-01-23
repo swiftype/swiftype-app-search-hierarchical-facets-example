@@ -16,15 +16,13 @@ class App extends Component {
     searchTerm: "",
     results: null,
     category1: "",
-    category1Selected: false,
     category2: "",
-    category2Selected: false,
-    category3: "",
-    category3Selected: false
+    category3: ""
   };
 
-  getFilters() {
-    const { category1, category2, category3 } = this.state;
+  getFilters(filters) {
+    const { category1, category2, category3 } = { ...this.state, ...filters };
+
     let arr = [];
 
     if (category1) {
@@ -42,14 +40,16 @@ class App extends Component {
     return arr;
   }
 
-  search = async () => {
+  search = async filters => {
     let promises = [];
+
+    const newFilters = { ...this.state, ...filters };
 
     promises = [
       ...promises,
       client.search(this.state.searchTerm, {
         filters: {
-          all: this.getFilters()
+          all: this.getFilters(newFilters)
         },
         facets: {
           category1: [
@@ -72,13 +72,12 @@ class App extends Component {
     ];
 
     promises = [...promises, this.getCategory1Facets()];
-
-    if (this.state.category1) {
-      promises = [...promises, this.getCategory2Facets()];
+    if (newFilters.category1) {
+      promises = [...promises, this.getCategory2Facets(newFilters)];
     }
 
-    if (this.state.category2) {
-      promises = [...promises, this.getCategory3Facets()];
+    if (newFilters.category2) {
+      promises = [...promises, this.getCategory3Facets(newFilters)];
     }
 
     const [
@@ -113,13 +112,13 @@ class App extends Component {
     return results.info.facets;
   };
 
-  getCategory2Facets = async () => {
+  getCategory2Facets = async filters => {
     const results = await client.search(this.state.searchTerm, {
       page: {
-        size: 0
+        size: 2
       },
       filters: {
-        all: [{ category1: this.state.category1 }]
+        all: [{ category1: filters.category1 }]
       },
       facets: {
         category2: [
@@ -132,15 +131,15 @@ class App extends Component {
     return results.info.facets;
   };
 
-  getCategory3Facets = async () => {
+  getCategory3Facets = async filters => {
     const results = await client.search(this.state.searchTerm, {
       page: {
         size: 0
       },
       filters: {
         all: [
-          { category1: this.state.category1 },
-          { category2: this.state.category2 }
+          { category1: filters.category1 },
+          { category2: filters.category2 }
         ]
       },
       facets: {
@@ -172,57 +171,33 @@ class App extends Component {
   };
 
   handleClickCategory1 = category1 => {
-    this.setState(
-      {
+    this.search({ category1 }).then(results => {
+      this.setState({
+        results,
         category1,
         category2: "",
         category3: ""
-      },
-      () => {
-        this.search().then(results => {
-          this.setState({
-            results,
-            category1Selected: true,
-            category2Selected: false,
-            category3Selected: false
-          });
-        });
-      }
-    );
+      });
+    });
   };
 
   handleClickCategory2 = category2 => {
-    this.setState(
-      {
+    this.search({ category2 }).then(results => {
+      this.setState({
+        results,
         category2,
         category3: ""
-      },
-      () => {
-        this.search().then(results => {
-          this.setState({
-            results,
-            category2Selected: true,
-            category3Selected: false
-          });
-        });
-      }
-    );
+      });
+    });
   };
 
   handleClickCategory3 = category3 => {
-    this.setState(
-      {
+    this.search({ category3 }).then(results => {
+      this.setState({
+        results,
         category3
-      },
-      () => {
-        this.search().then(results => {
-          this.setState({
-            results,
-            category3Selected: true
-          });
-        });
-      }
-    );
+      });
+    });
   };
 
   componentDidMount() {
@@ -260,50 +235,48 @@ class App extends Component {
                         >
                           {thing.value} ({thing.count})
                         </span>
-                        {this.state.category1Selected &&
-                          this.state.category1 === thing.value && (
-                            <div>
-                              {this.state.results.info.facets[
-                                "category2"
-                              ][0].data.map(thing => (
-                                <div key={thing.value}>
-                                  &nbsp;&nbsp;
-                                  <span
-                                    className={"selectable"}
-                                    onClick={e => {
-                                      e.preventDefault();
-                                      this.handleClickCategory2(thing.value);
-                                    }}
-                                  >
-                                    {thing.value} ({thing.count})
-                                  </span>
-                                  {this.state.category2Selected &&
-                                    this.state.category2 === thing.value && (
-                                      <div>
-                                        {this.state.results.info.facets[
-                                          "category3"
-                                        ][0].data.map(thing => (
-                                          <div key={thing.value}>
-                                            &nbsp;&nbsp;&nbsp;&nbsp;
-                                            <span
-                                              className={"selectable"}
-                                              onClick={e => {
-                                                e.preventDefault();
-                                                this.handleClickCategory3(
-                                                  thing.value
-                                                );
-                                              }}
-                                            >
-                                              {thing.value} ({thing.count})
-                                            </span>
-                                          </div>
-                                        ))}
+                        {this.state.category1 === thing.value && (
+                          <div>
+                            {this.state.results.info.facets[
+                              "category2"
+                            ][0].data.map(thing => (
+                              <div key={thing.value}>
+                                &nbsp;&nbsp;
+                                <span
+                                  className={"selectable"}
+                                  onClick={e => {
+                                    e.preventDefault();
+                                    this.handleClickCategory2(thing.value);
+                                  }}
+                                >
+                                  {thing.value} ({thing.count})
+                                </span>
+                                {this.state.category2 === thing.value && (
+                                  <div>
+                                    {this.state.results.info.facets[
+                                      "category3"
+                                    ][0].data.map(thing => (
+                                      <div key={thing.value}>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;
+                                        <span
+                                          className={"selectable"}
+                                          onClick={e => {
+                                            e.preventDefault();
+                                            this.handleClickCategory3(
+                                              thing.value
+                                            );
+                                          }}
+                                        >
+                                          {thing.value} ({thing.count})
+                                        </span>
                                       </div>
-                                    )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   )}

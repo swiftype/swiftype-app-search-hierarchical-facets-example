@@ -20,8 +20,11 @@ class App extends Component {
     category3: ""
   };
 
-  getFilters(filters) {
-    const { category1, category2, category3 } = { ...this.state, ...filters };
+  /*
+    Converts filters object to array syntax for API
+  */
+  getFiltersArray(filters) {
+    const { category1, category2, category3 } = filters;
 
     let arr = [];
 
@@ -40,18 +43,20 @@ class App extends Component {
     return arr;
   }
 
-  search = async filters => {
+  search = async newFilters => {
     let promises = [];
 
-    const newFilters = { ...this.state, ...filters };
+    const updatedFilters = { ...this.state, ...newFilters };
 
     promises = [
       ...promises,
       client.search(this.state.searchTerm, {
         filters: {
-          all: this.getFilters(newFilters)
+          all: this.getFiltersArray(updatedFilters)
         },
         facets: {
+          // On each search we perform, we will fetch all of the facets we
+          // need, and simply not show the ones we do not need.
           category1: [
             {
               type: "value"
@@ -71,13 +76,23 @@ class App extends Component {
       })
     ];
 
-    promises = [...promises, this.getCategory1Facets()];
-    if (newFilters.category1) {
-      promises = [...promises, this.getCategory2Facets(newFilters)];
+    // If we've filtered on our first dimension, we won't have
+    // counts for ALL of our 1st level dimensions, we'd only have a count
+    // for the currently selected dimension. We'll do a separate query
+    // to get our first dimension's facet counts, and merge them into the
+    // counts we get back from our search query.
+    if (updatedFilters.category1) {
+      promises = [...promises, this.getCategory1Facets()];
     }
 
-    if (newFilters.category2) {
-      promises = [...promises, this.getCategory3Facets(newFilters)];
+    // Ditto
+    if (updatedFilters.category2) {
+      promises = [...promises, this.getCategory2Facets(updatedFilters)];
+    }
+
+    // Ditto
+    if (updatedFilters.category3) {
+      promises = [...promises, this.getCategory3Facets(updatedFilters)];
     }
 
     const [
@@ -87,12 +102,16 @@ class App extends Component {
       category3Facets
     ] = await Promise.all(promises);
 
-    let facets = {};
-    facets = { ...facets, ...category1Facets };
-    facets = { ...facets, ...category2Facets };
-    facets = { ...facets, ...category3Facets };
+    const facets = {
+      ...category1Facets,
+      ...category2Facets,
+      ...category3Facets
+    };
 
-    results.info.facets = facets;
+    // As mentioned above, we merge all of our individual facet queries back
+    // into our search query results.
+    results.info.facets = { ...results.info.facets, ...facets };
+
     return results;
   };
 
@@ -112,13 +131,13 @@ class App extends Component {
     return results.info.facets;
   };
 
-  getCategory2Facets = async filters => {
+  getCategory2Facets = async newFilters => {
     const results = await client.search(this.state.searchTerm, {
       page: {
         size: 2
       },
       filters: {
-        all: [{ category1: filters.category1 }]
+        all: [{ category1: newFilters.category1 }]
       },
       facets: {
         category2: [
@@ -131,15 +150,15 @@ class App extends Component {
     return results.info.facets;
   };
 
-  getCategory3Facets = async filters => {
+  getCategory3Facets = async newFilters => {
     const results = await client.search(this.state.searchTerm, {
       page: {
         size: 0
       },
       filters: {
         all: [
-          { category1: filters.category1 },
-          { category2: filters.category2 }
+          { category1: newFilters.category1 },
+          { category2: newFilters.category2 }
         ]
       },
       facets: {
@@ -224,50 +243,55 @@ class App extends Component {
               {this.state.results && (
                 <div>
                   {this.state.results.info.facets["category1"][0].data.map(
-                    thing => (
-                      <div key={thing.value}>
+                    category1Facet => (
+                      <div key={category1Facet.value}>
                         <span
-                          className={"selectable"}
+                          className="selectable"
                           onClick={e => {
                             e.preventDefault();
-                            this.handleClickCategory1(thing.value);
+                            this.handleClickCategory1(category1Facet.value);
                           }}
                         >
-                          {thing.value} ({thing.count})
+                          {category1Facet.value} ({category1Facet.count})
                         </span>
-                        {this.state.category1 === thing.value && (
+                        {this.state.category1 === category1Facet.value && (
                           <div>
                             {this.state.results.info.facets[
                               "category2"
-                            ][0].data.map(thing => (
-                              <div key={thing.value}>
+                            ][0].data.map(category2Facet => (
+                              <div key={category2Facet.value}>
                                 &nbsp;&nbsp;
                                 <span
-                                  className={"selectable"}
+                                  className="selectable"
                                   onClick={e => {
                                     e.preventDefault();
-                                    this.handleClickCategory2(thing.value);
+                                    this.handleClickCategory2(
+                                      category2Facet.value
+                                    );
                                   }}
                                 >
-                                  {thing.value} ({thing.count})
+                                  {category2Facet.value} ({category2Facet.count}
+                                  )
                                 </span>
-                                {this.state.category2 === thing.value && (
+                                {this.state.category2 ===
+                                  category2Facet.value && (
                                   <div>
                                     {this.state.results.info.facets[
                                       "category3"
-                                    ][0].data.map(thing => (
-                                      <div key={thing.value}>
+                                    ][0].data.map(category3Facet => (
+                                      <div key={category3Facet.value}>
                                         &nbsp;&nbsp;&nbsp;&nbsp;
                                         <span
-                                          className={"selectable"}
+                                          className="selectable"
                                           onClick={e => {
                                             e.preventDefault();
                                             this.handleClickCategory3(
-                                              thing.value
+                                              category3Facet.value
                                             );
                                           }}
                                         >
-                                          {thing.value} ({thing.count})
+                                          {category3Facet.value} (
+                                          {category3Facet.count})
                                         </span>
                                       </div>
                                     ))}

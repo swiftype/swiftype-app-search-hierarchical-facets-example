@@ -99,6 +99,9 @@ class App extends Component {
 
   getCategory1Facets = async () => {
     const results = await client.search(this.state.searchTerm, {
+      page: {
+        size: 0
+      },
       facets: {
         category1: [
           {
@@ -112,6 +115,9 @@ class App extends Component {
 
   getCategory2Facets = async () => {
     const results = await client.search(this.state.searchTerm, {
+      page: {
+        size: 0
+      },
       filters: {
         all: [{ category1: this.state.category1 }]
       },
@@ -128,6 +134,9 @@ class App extends Component {
 
   getCategory3Facets = async () => {
     const results = await client.search(this.state.searchTerm, {
+      page: {
+        size: 0
+      },
       filters: {
         all: [
           { category1: this.state.category1 },
@@ -163,105 +172,57 @@ class App extends Component {
   };
 
   handleClickCategory1 = category1 => {
-    if (!this.state.category1Selected) {
-      this.setState(
-        {
-          category1
-        },
-        () => {
-          this.search().then(results => {
-            this.setState({
-              results,
-              category1Selected: true
-            });
+    this.setState(
+      {
+        category1,
+        category2: "",
+        category3: ""
+      },
+      () => {
+        this.search().then(results => {
+          this.setState({
+            results,
+            category1Selected: true,
+            category2Selected: false,
+            category3Selected: false
           });
-        }
-      );
-    } else {
-      this.setState(
-        {
-          category1: "",
-          category2: "",
-          category3: ""
-        },
-        () => {
-          this.search().then(results => {
-            this.setState({
-              results,
-              category1Selected: false,
-              category2Selected: false,
-              category3Selected: false
-            });
-          });
-        }
-      );
-    }
+        });
+      }
+    );
   };
 
   handleClickCategory2 = category2 => {
-    if (!this.state.category2Selected) {
-      this.setState(
-        {
-          category2
-        },
-        () => {
-          this.search().then(results => {
-            this.setState({
-              results,
-              category2Selected: true
-            });
+    this.setState(
+      {
+        category2,
+        category3: ""
+      },
+      () => {
+        this.search().then(results => {
+          this.setState({
+            results,
+            category2Selected: true,
+            category3Selected: false
           });
-        }
-      );
-    } else {
-      this.setState(
-        {
-          category2: "",
-          category3: ""
-        },
-        () => {
-          this.search().then(results => {
-            this.setState({
-              results,
-              category2Selected: false,
-              category3Selected: false
-            });
-          });
-        }
-      );
-    }
+        });
+      }
+    );
   };
 
   handleClickCategory3 = category3 => {
-    if (!this.state.category3Selected) {
-      this.setState(
-        {
-          category3
-        },
-        () => {
-          this.search().then(results => {
-            this.setState({
-              results,
-              category3Selected: true
-            });
+    this.setState(
+      {
+        category3
+      },
+      () => {
+        this.search().then(results => {
+          this.setState({
+            results,
+            category3Selected: true
           });
-        }
-      );
-    } else {
-      this.setState(
-        {
-          category3: ""
-        },
-        () => {
-          this.search().then(results => {
-            this.setState({
-              results,
-              category3Selected: false
-            });
-          });
-        }
-      );
-    }
+        });
+      }
+    );
   };
 
   componentDidMount() {

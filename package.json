@@ -1,5 +1,6 @@
 {
   "name": "hierarchical-facets-example",
+  "homepage": "https://swiftype.github.io/swiftype-app-search-hierarchical-facets-example/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
